@@ -1,5 +1,6 @@
 package ru.spbau.sazanovich.nikita.astexplorer;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,13 +15,13 @@ import com.intellij.psi.impl.source.PsiMethodImpl;
 import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import javax.swing.JTextPane;
+import javax.swing.*;
 
 public class MethodAstAction extends AnAction {
 
   private static final int INDENTION_SPACES_PER_LEVEL = 2;
 
+  @Override
   public void actionPerformed(AnActionEvent event) {
     Project project = ActionEventUtil.getProjectFor(event);
     Editor editor = ActionEventUtil.getEditorFor(event);
@@ -50,7 +51,8 @@ public class MethodAstAction extends AnAction {
 
   /** Finds a PSI element that represents a method by checking element's parents. */
   @Nullable
-  private static PsiElement findParentMethod(PsiElement psiElement) {
+  @VisibleForTesting
+  static PsiElement findParentMethod(PsiElement psiElement) {
     if (psiElement == null) {
       return null;
     }
@@ -63,6 +65,13 @@ public class MethodAstAction extends AnAction {
    * Recursively iterates over element's children and populating {@link StringBuilder} with info
    * about traversed elements.
    */
+  @VisibleForTesting
+  static void traversePsiElement(
+      PsiElement psiElement,
+      StringBuilder astSummaryBuilder) {
+    traversePsiElement(psiElement, astSummaryBuilder, 0 /* indentionLevel */);
+  }
+
   private static void traversePsiElement(
       PsiElement psiElement,
       StringBuilder astSummaryBuilder,
