@@ -6,10 +6,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.WindowWrapper;
+import com.intellij.openapi.ui.WindowWrapperBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiMethodImpl;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.JComponent;
+import javax.swing.JTextPane;
 
 public class MethodAstAction extends AnAction {
 
@@ -39,9 +45,10 @@ public class MethodAstAction extends AnAction {
     }
     StringBuilder astSummaryBuilder = new StringBuilder();
     traversePsiElement(methodPsiElement, astSummaryBuilder, 0);
-    showInfoMessage(astSummaryBuilder.toString(), project);
+    showDialogWithAst(astSummaryBuilder.toString(), project);
   }
 
+  /** Finds a PSI element that represents a method by checking element's parents. */
   @Nullable
   private static PsiElement findParentMethod(PsiElement psiElement) {
     if (psiElement == null) {
@@ -52,13 +59,14 @@ public class MethodAstAction extends AnAction {
         : findParentMethod(psiElement.getParent());
   }
 
+  /**
+   * Recursively iterates over element's children and populating {@link StringBuilder} with info
+   * about traversed elements.
+   */
   private static void traversePsiElement(
       PsiElement psiElement,
       StringBuilder astSummaryBuilder,
       int indentionLevel) {
-    if (psiElement == null) {
-      return;
-    }
     astSummaryBuilder
         .append(Strings.repeat("-", indentionLevel * INDENTION_SPACES_PER_LEVEL));
     astSummaryBuilder.append(psiElement.toString());
@@ -74,5 +82,21 @@ public class MethodAstAction extends AnAction {
         message,
         "Information",
         Messages.getInformationIcon());
+  }
+
+  private static void showDialogWithAst(String astSummary, Project project) {
+    WindowWrapper wrapperDialog =
+        new WindowWrapperBuilder(WindowWrapper.Mode.MODAL, packTextIntoJComponent(astSummary))
+            .setProject(project)
+            .setTitle("AST of the current method")
+            .build();
+    wrapperDialog.show();
+  }
+
+  private static JComponent packTextIntoJComponent(String text) {
+    JTextPane textPane = new JTextPane();
+    textPane.setText(text);
+    textPane.setCaretPosition(0);
+    return new JBScrollPane(textPane);
   }
 }
